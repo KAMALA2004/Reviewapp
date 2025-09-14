@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const { User } = require('../models');
 const { authMiddleware } = require('../middleware/auth');
+const { Op } = require('sequelize');
 
 const router = express.Router();
 
@@ -36,7 +37,7 @@ router.post('/register', [
     // Check if user already exists
     const existingUser = await User.findOne({
       where: {
-        $or: [{ email }, { username }]
+        [Op.or]: [{ email }, { username }]
       }
     });
 
@@ -80,7 +81,7 @@ router.post('/register', [
     console.error('Registration error:', error);
     res.status(500).json({
       error: 'Registration failed',
-      message: 'Unable to create user account'
+      message: error.message || 'Unable to create user account'
     });
   }
 });
@@ -146,7 +147,7 @@ router.post('/login', [
     console.error('Login error:', error);
     res.status(500).json({
       error: 'Login failed',
-      message: 'Unable to authenticate user'
+      message: error.message || 'Unable to authenticate user'
     });
   }
 });
