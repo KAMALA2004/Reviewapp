@@ -82,7 +82,7 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = 'http://localhost:8080/api';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
@@ -134,17 +134,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        localStorage.setItem('token', data.token);
-        dispatch({
-          type: 'AUTH_SUCCESS',
-          payload: { user: data.user, token: data.token },
-        });
-      } else {
-        throw new Error(data.message || 'Login failed');
+      if (!response.ok) {
+        let errorMessage = 'Login failed';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorData.error || errorMessage;
+        } catch (parseError) {
+          errorMessage = `Server error: ${response.status} ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
       }
+
+      const data = await response.json();
+      localStorage.setItem('token', data.token);
+      dispatch({
+        type: 'AUTH_SUCCESS',
+        payload: { user: data.user, token: data.token },
+      });
     } catch (error) {
       console.error('Login error:', error);
       dispatch({ type: 'AUTH_FAILURE' });
@@ -164,17 +170,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         body: JSON.stringify({ username, email, password }),
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        localStorage.setItem('token', data.token);
-        dispatch({
-          type: 'AUTH_SUCCESS',
-          payload: { user: data.user, token: data.token },
-        });
-      } else {
-        throw new Error(data.message || 'Registration failed');
+      if (!response.ok) {
+        let errorMessage = 'Registration failed';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorData.error || errorMessage;
+        } catch (parseError) {
+          errorMessage = `Server error: ${response.status} ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
       }
+
+      const data = await response.json();
+      localStorage.setItem('token', data.token);
+      dispatch({
+        type: 'AUTH_SUCCESS',
+        payload: { user: data.user, token: data.token },
+      });
     } catch (error) {
       console.error('Registration error:', error);
       dispatch({ type: 'AUTH_FAILURE' });
